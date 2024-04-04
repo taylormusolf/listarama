@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { AgGridReact } from 'ag-grid-react'; // AG Grid Component
 import "ag-grid-community/styles/ag-grid.css"; // Mandatory CSS required by the grid
 import "ag-grid-community/styles/ag-theme-quartz.css"; // Optional Theme applied to the grid
@@ -6,14 +6,18 @@ import "ag-grid-community/styles/ag-theme-quartz.css"; // Optional Theme applied
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
   // Row Data: The data to be displayed.
   const [gridApi, setGridApi] = useState(null);
   const [gridColumnApi, setGridColumnApi] = useState(null);
+  const [newListItem, setNewListItem] = useState({make: '', model: '', price: '', electric: false})
   // Column Definitions: Defines the columns to be displayed.
   const [colDefs, setColDefs] = useState([
     { field: "ord", rowDrag: true, valueGetter: "node.rowIndex + 1"},
-    { field: "make" },
+    { field: "make", cellEditor: "agTextCellEditor",
+      cellEditorParams: {
+        maxLength: 20,
+      } 
+    },
     { field: "model" },
     { field: "price" },
     { field: "electric" }
@@ -27,6 +31,13 @@ function App() {
       { make: "Toyota", model: "Corolla", price: 29600, electric: false },
     ];
   });
+
+  const defaultColDef = useMemo(() => {
+    return {
+      flex: 1,
+      editable: true,
+    };
+  }, []);
   
   useEffect(() => {
     localStorage.setItem("rowData", JSON.stringify(rowData));
@@ -37,17 +48,16 @@ function App() {
     // setGridColumnApi(params.columnApi);
   };
 
-
-
-
+  const handleFormSubmit = (e) => {
+    setRowData([...rowData, newListItem]);
+    setNewListItem({make: '', model: '', price: '', electric: false})
+  }
+  
   return (
     <>
 
       <h1>Create a List</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          create a list
-        </button>
         <p>
          Create a list for every occasion!
         </p>
@@ -64,6 +74,7 @@ function App() {
           rowSelection='multiple'
           rowDragEntireRow
           onGridReady={onGridReady}
+          defaultColDef={defaultColDef}
           onRowDragEnd={(e)=> {
             const rows = [];
             gridApi.forEachNodeAfterFilterAndSort((node, id) => rows.push({...node.data}));
@@ -73,6 +84,13 @@ function App() {
           }}
         />
       </div>
+      <form onSubmit={handleFormSubmit}>
+          <label> Make <input type="text" value={newListItem.make} onChange={e => setNewListItem({...newListItem, make: e.target.value})}/></label>
+          <label> Model <input type="text" value={newListItem.model} onChange={e => setNewListItem({...newListItem, model: e.target.value})}/></label>
+          <label> Price <input type="number" value={newListItem.price} onChange={e => setNewListItem({...newListItem, price: parseInt(e.target.value)})}/></label>
+          <label> Electric <input type="checkbox"/></label>
+          <button>Add New Item</button>
+      </form>
       <p className="read-the-docs">
         All rights reserved
       </p>
